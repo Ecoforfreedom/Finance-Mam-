@@ -19,17 +19,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: 未来基金POC/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Install
-        working-directory: 未来基金POC
-        run: npm install
+        run: npm ci
       - name: Build
-        working-directory: 未来基金POC
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 未来基金POC/dist
+          path: dist
   deploy:
     environment:
       name: github-pages
