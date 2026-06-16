@@ -4,11 +4,6 @@
 
 本项目使用模拟数据，不接入真实客户信息；默认采用本地规则引擎模拟 AI 能力，无需 API Key，可直接部署到 GitHub Pages。
 
-## 在线演示地址
-
-- GitHub Repository：https://github.com/Ecoforfreedom/Finance-Mam-
-- GitHub Pages：https://ecoforfreedom.github.io/Finance-Mam-/#/
-- 现场演示入口：https://ecoforfreedom.github.io/Finance-Mam-/#/interactive
 
 ## 核心功能
 
