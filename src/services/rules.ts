@@ -1,0 +1,16 @@
+import { projects, sourcesFor, missing, conflicts } from './data';
+import type { ClassifiedResult, Project, QueryCondition } from '../types/domain';
+const early=['种子轮','天使轮','Pre-A轮','A轮'];
+const stageRank=(s:string)=>s.includes('种子')?0:s.includes('天使')?1:s.includes('Pre-A')?2:s==='A轮'||s.includes('A轮')&&!s.includes('A+')&&!s.includes('战略')?3:s.includes('A+')?4:s.includes('B')?5:6;
+export function parseNaturalLanguage(q:string):QueryCondition{const condition:QueryCondition={strict:true}; if(/AI\s*for\s*Science|AI.*Science|科学/.test(q)) condition.aiForScience=true; if(/量子/.test(q)) condition.quantum=true; if(/A轮及以前|A轮以前|早期/.test(q)) condition.stageMax='A轮'; if(/A\+轮及以前/.test(q)) condition.stageMax='A+轮'; if(/上海/.test(q)) condition.shanghaiMode=/工商注册|注册/.test(q)?'registration':/实际经营|开展实际经营|人员/.test(q)?'operation':'landing'; if(/融资|交割/.test(q)&&/过去|最近|本季度|季度/.test(q)) condition.recentFinancing=true; if(/明确写明|明确事实|严格/.test(q)) condition.explicitOnly=true; return condition;}
+export function classifyProject(p:Project,c:QueryCondition){const reasons:string[]=[];const pending:string[]=[]; if(c.aiForScience){if(p.aiForScienceStatus==='no') reasons.push('不属于AI for Science：AI不是科学研究核心场景'); if(p.aiForScienceStatus==='uncertain') pending.push('AI for Science边界');}
+ if(c.quantum){if(p.quantumStatus==='no') reasons.push('不属于量子科技：不涉及量子计算/通信/精密测量等核心方向'); if(p.quantumStatus==='uncertain') pending.push('量子科技判断');}
+ if(c.stageMax){const max=c.stageMax==='A+轮'?4:3; if(/冲突|\//.test(p.financingStage)) pending.push('融资轮次存在冲突'); else if(stageRank(p.financingStage)>max) reasons.push(`融资阶段为${p.financingStage}，不在${c.stageMax}及以前`);}
+ if(c.shanghaiMode){const s=p.shanghaiLandingStatus; if(c.shanghaiMode==='landing'){ if(/未在上海|口头计划/.test(s)) reasons.push('未完成上海落地'); if(/意向|租赁|证明不足|未设独立法人|延期/.test(s)) pending.push('上海落地证据不足或口径不清');}
+ if(c.shanghaiMode==='registration'){ if(!/注册|总部/.test(s)) reasons.push('缺少上海工商注册证据'); if(/证明不足|部分|未设独立法人/.test(s)) pending.push('上海工商注册或证明材料待确认');}
+ if(c.shanghaiMode==='operation'){ if(!p.actualOperationInShanghai) reasons.push('未证明在上海开展实际经营'); if(p.actualOperationInShanghai===null||/部分|证明不足/.test(s)) pending.push('上海实际经营人员/社保/场地证据不足');}}
+ if(c.recentFinancing&&!p.lastFinancingDate?.startsWith('2026-06')) reasons.push('本季度无融资进展'); if(c.explicitOnly&&sourcesFor(p.id).some(s=>s.evidenceType==='inferred'||s.requiresConfirmation)) pending.push('只看明确事实时需人工确认');
+ return {reasons,pending};}
+export function runQuery(condition:QueryCondition):ClassifiedResult{const included:Project[]=[];const excluded:ClassifiedResult['excluded']=[];const pending:ClassifiedResult['pending']=[];projects.forEach(p=>{const r=classifyProject(p,condition); if(r.reasons.length) excluded.push({project:p,reasons:r.reasons}); else if(r.pending.length) pending.push({project:p,fields:r.pending,gap:missing.find((m:any)=>m['项目编号']===p.id)?.['缺口事项']||conflicts.find((m:any)=>m['项目编号']===p.id)?.['冲突类型']||'现有材料不足以形成明确判断',ask:`请${p.shortName}或GP补充正式证明材料`}); else included.push(p);}); return {included,excluded,pending,condition};}
+export const defaultQuery='请筛选属于量子科技、A轮及以前且已在上海落地的项目，并整理项目进展、融资情况和需关注事项。';
+export const demoQueries=['哪些项目属于AI for Science？','哪些项目属于量子科技？','哪些项目处于A轮及以前？','哪些项目已经在上海完成工商注册？','哪些量子科技早期项目已经在上海开展实际经营？','请筛选过去一个季度完成融资的AI for Science项目。','请生成上海落地项目专题报送表。'];

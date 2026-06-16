@@ -1,0 +1,3 @@
+import * as XLSX from 'xlsx';
+export function exportExcel(filename:string,sheets:Record<string,unknown[]>){const wb=XLSX.utils.book_new();Object.entries(sheets).forEach(([name,rows])=>{const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{说明:'当前筛选无数据'}]);XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31));});XLSX.writeFile(wb,`${filename}_${new Date().toISOString().slice(0,10)}.xlsx`);}
+export function downloadMarkdown(filename:string,content:string){const blob=new Blob([content],{type:'text/markdown;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
