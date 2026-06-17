@@ -16,7 +16,7 @@
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes splashFade{to{opacity:0;visibility:hidden}}
 .splash{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:linear-gradient(160deg,#06172d,#0e3b70 60%,#0b1f3a);color:white;text-align:center;animation:splashFade .45s ease .9s forwards}
-.splash-icon{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,var(--ff-cyan),var(--ff-blue2));font-size:28px;font-weight:900;box-shadow:0 12px 30px rgba(37,99,235,.45);margin-bottom:10px}
+.splash-logo{background:white;border-radius:16px;padding:12px 24px;display:inline-block;margin-bottom:4px}
 .splash h2{font-size:22px;margin:0 0 6px;letter-spacing:-.3px}
 .splash p{color:#9fc4f4;font-size:13px;margin:0 0 24px}
 .splash-spinner{width:32px;height:32px;border:3px solid rgba(56,189,248,.2);border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
