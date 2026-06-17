@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ArrowRight, Bot, CheckCircle2, Download, FileSearch, Filter, PlayCircle, RefreshCw, ShieldCheck, Sparkles, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Bot, Download, FileSearch, Filter, PlayCircle, RefreshCw, ShieldCheck, Sparkles, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { clauses, fieldSources, projects, sourcesFor, tasks, updates } from '../services/data';
 import { defaultQuery, demoQueries, parseNaturalLanguage, runQuery } from '../services/rules';
 import { StatusBadge } from '../components/ui';
@@ -38,7 +38,6 @@ interface TaskState {
   [id: string]: { status: 'pending' | 'completed' | 'deferred'; deferredDate?: string };
 }
 
-// 任务管理组件
 function TaskManager({ tasks: initialTasks, onTaskUpdate }: { tasks: TaskItem[]; onTaskUpdate?: (state: TaskState) => void }) {
   const [taskState, setTaskState] = useState<TaskState>(() => {
     const saved = localStorage.getItem('taskState');
@@ -60,7 +59,6 @@ function TaskManager({ tasks: initialTasks, onTaskUpdate }: { tasks: TaskItem[];
   const getTaskStatus = (id: string) => taskState[id]?.status || 'pending';
   const getDeferredDate = (id: string) => taskState[id]?.deferredDate;
 
-  const getTodayDate = () => new Date().toISOString().split('T')[0];
   const getTomorrowDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -156,7 +154,6 @@ function TaskManager({ tasks: initialTasks, onTaskUpdate }: { tasks: TaskItem[];
   );
 }
 
-// 六步演示导航组件
 interface GuidedTourProps {
   isActive: boolean;
   currentStep: number;
@@ -165,52 +162,56 @@ interface GuidedTourProps {
 }
 
 function GuidedTour({ isActive, currentStep, onStepChange, onClose }: GuidedTourProps) {
-  if (!isActive) return null;
-
   const steps = [
     {
       title: '第 1 步：选择报送任务',
-      description: '输入您需要处理的专题任务或业务需求，例如选择特定行业、融资阶段或区域。系统将自动解析自然语言。'
+      description: '输入您需要处理的专题任务或业务需求，例如选择特定行业、融资阶段或区域。系统将自动解析自然语言。',
+      target: 'query'
     },
     {
-      title: '第 2 步：AI 拆解筛选条件',
-      description: '系统将您的需求自动拆解为量子科技、科技赛道、融资阶段、地区等多个筛选条件，展示条件组合效果。'
+      title: '第 2 步：拆解筛选条件',
+      description: '系统将您的需求自动拆解为量子科技、科技赛道、融资阶段、地区等多个筛选条件，展示条件组合效果。',
+      target: 'query'
     },
     {
       title: '第 3 步：查看匹配项目',
-      description: '系统筛选并显示符合条件的纳入项目，以及需要进一步核验的待确认项目。您可以点击每个项目查看详情。'
+      description: '系统筛选并显示符合条件的纳入项目，以及需要进一步核验的待确认项目。您可以点击每个项目查看详情。',
+      target: 'results'
     },
     {
       title: '第 4 步：核验进展与异常',
-      description: '查看各项目的跨期进展、异常变化和信息问题。点击"查看来源"核验每项信息的原始证据和出处。'
+      description: '查看各项目的跨期进展、异常变化和信息问题。点击"查看来源"核验每项信息的原始证据和出处。',
+      target: 'progress'
     },
     {
       title: '第 5 步：处理投资经理待办',
-      description: '在"投资经理待办"中勾选完成的任务、延后需要处理的事项，系统自动记录状态并支持导出。'
+      description: '在"投资经理待办"中勾选完成的任务、延后需要处理的事项，系统自动记录状态并支持导出。',
+      target: 'tasks'
     },
     {
       title: '第 6 步：生成报送结果',
-      description: '系统整理项目结果、风险事项和待确认内容，形成最终报送材料。点击"导出当前结果"生成 Excel 文件。'
+      description: '系统整理项目结果、异常事项和待确认内容，形成最终报送材料。点击"导出当前结果"生成 Excel 文件。',
+      target: 'export'
     }
   ];
 
   const step = steps[currentStep - 1];
 
+  useEffect(() => {
+    if (!isActive || !step) return;
+    document.querySelectorAll('.tour-active').forEach(el => el.classList.remove('tour-active'));
+    const target = document.querySelector(`[data-tour="${step.target}"]`);
+    target?.classList.add('tour-active');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return () => target?.classList.remove('tour-active');
+  }, [isActive, step]);
+
+  if (!isActive || !step) return null;
+
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      background: 'white',
-      border: '2px solid #0066cc',
-      borderRadius: '8px',
-      padding: '20px',
-      maxWidth: '400px',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-      zIndex: 1000
-    }}>
+    <div className="tour-box">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0066cc' }}>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#0f4c8f' }}>
           {step?.title}
         </span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>
@@ -220,6 +221,7 @@ function GuidedTour({ isActive, currentStep, onStepChange, onClose }: GuidedTour
       <p style={{ fontSize: '14px', color: '#333', marginBottom: '16px', lineHeight: 1.5 }}>
         {step?.description}
       </p>
+      <div className="tour-progress"><span style={{ width: `${(currentStep / steps.length) * 100}%` }} /></div>
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
         <button
           className="btn"
@@ -229,7 +231,7 @@ function GuidedTour({ isActive, currentStep, onStepChange, onClose }: GuidedTour
         >
           <ChevronLeft size={16} /> 上一步
         </button>
-        <div style={{ fontSize: '12px', color: '#666', alignSelf: 'center' }}>
+        <div style={{ fontSize: '12px', color: '#666', alignSelf: 'center', minWidth: 42, textAlign: 'center' }}>
           {currentStep} / {steps.length}
         </div>
         {currentStep < steps.length ? (
@@ -341,7 +343,7 @@ export default function InteractiveDemo() {
         <span className="badge blue"><Sparkles size={14} /> 交互演示页</span>
         <h1>未来基金投后管理智能平台</h1>
         <p>用一个页面串联自然语言专题报送、规则筛选、来源核验、跨期进展、协议履约和导出，适合现场向基金管理人演示。</p>
-        <div className="toolbar"><button className="btn primary" onClick={startGuidedTour}><PlayCircle size={16} /> 开启六步演示</button><button className="btn" onClick={run}><RefreshCw size={16} /> 运行当前查询</button><button className="btn" onClick={exportCurrent}><Download size={16} /> 导出当前结果</button></div>
+        <div className="toolbar"><button className="btn primary" onClick={startGuidedTour}><PlayCircle size={16} /> 开启六步演示</button><button className="btn" onClick={run}><RefreshCw size={16} /> 运行当前查询</button><button className="btn" data-tour="export" onClick={exportCurrent}><Download size={16} /> 导出当前结果</button></div>
       </div>
       <div className="hero-panel">
         <div className="metric">{result.included.length}/{projects.length}</div><div className="muted">当前纳入项目</div>
@@ -351,7 +353,7 @@ export default function InteractiveDemo() {
     </section>
 
     <section className="grid interactive-grid">
-      <div className="card query-card">
+      <div className="card query-card" data-tour="query">
         <div className="section-title"><h2><Bot size={20} /> 自然语言查询</h2></div>
         <textarea className="input-lg" value={query} onChange={e => setQuery(e.target.value)} placeholder="输入您的筛选需求..." />
         <div className="toolbar">{demoQueries.slice(0, 5).map(q => <button key={q} className="btn" onClick={() => { setQuery(q); setCondition(parseNaturalLanguage(q)); }}>{q}</button>)}</div>
@@ -362,13 +364,13 @@ export default function InteractiveDemo() {
       </div>
     </section>
 
-    <section className="card">
+    <section className="card" data-tour="results">
       <div className="section-title"><h2>专题报送结果</h2><div className="tabs"><button className={tab === 'included' ? 'tab active' : 'tab'} onClick={() => setTab('included')}>纳入项目 {result.included.length}</button><button className={tab === 'pending' ? 'tab active' : 'tab'} onClick={() => setTab('pending')}>待确认 {result.pending.length}</button><button className={tab === 'excluded' ? 'tab active' : 'tab'} onClick={() => setTab('excluded')}>不纳入 {result.excluded.length}</button></div></div>
       <div className="result-cards">{rows.slice(0, 8).map((row: any) => { const p: Project = row.project; return <div key={p.id} className={`result-card ${selected?.id === p.id ? 'selected' : ''}`} onClick={() => setSelected(p)}><div className="section-title"><b>{p.shortName}</b><StatusBadge s={p.portfolioStatus} /></div><p>{p.industry} · {p.financingStage}</p><p className="muted">{tab === 'included' ? p.summary : tab === 'pending' ? `${row.fields.join('、')}：${row.gap}` : row.reasons.join('；')}</p><div className="toolbar"><button className="btn" onClick={(e) => { e.stopPropagation(); openSource(sourcesFor(p.id)[0] || fieldSources[0]); }} style={{ minWidth: '90px', whiteSpace: 'nowrap' }}><FileSearch size={14} /> 查看来源</button><span className="badge blue">完整度 {p.completion}%</span></div></div>; })}</div>
     </section>
 
     <section className="grid detail-grid">
-      <div className="card">
+      <div className="card" data-tour="progress">
         <div className="section-title"><h2><ShieldCheck size={20} /> 选中项目核验面板</h2><span className="badge blue">{activeProject.shortName}</span></div>
         <div className="project-profile"><div><b>{activeProject.name}</b><p>{activeProject.technologies.join('、')}</p><p className="muted">{activeProject.shanghaiLandingStatus}</p></div><div className="metric">{activeProject.completion}%</div></div>
         <div className="source-list">{projectSources.map(s => <button key={s.id} className="source-row" onClick={() => openSource(s)}><span><b>{s.fieldName}</b><em>{s.documentTitle}</em></span><span className={s.hasConflict ? 'badge red' : s.requiresConfirmation ? 'badge yellow' : 'badge green'}>{s.hasConflict ? '冲突' : s.requiresConfirmation ? '待确认' : '明确事实'}</span></button>)}</div>
@@ -381,7 +383,7 @@ export default function InteractiveDemo() {
         <div className="section-title"><h2>协议履约追踪</h2><button className="btn" onClick={() => exportExcel('未来基金_演示页协议履约', { 协议履约: projectClauses })}>导出条款</button></div>
         {projectClauses.map(c => <div className="clause" key={c.id}><div className="section-title"><b>{c.clauseNumber} · {c.clauseType}</b><StatusBadge s={c.signal} label={c.status === 'completed' ? '已完成' : c.status === 'overdue' ? '已逾期' : c.status === 'unknown' ? '无法判断' : '进行中/待确认'} /></div><p>{c.obligation}</p><p className="muted">截止：{c.deadline || '持续义务'}｜证据：{c.latestEvidence}</p><button className="btn" onClick={() => openSource(sourcesFor(c.projectId)[0] || fieldSources[0])} style={{ minWidth: '90px', whiteSpace: 'nowrap' }}>查看来源</button></div>)}
       </div>
-      <div className="card">
+      <div className="card" data-tour="tasks">
         <div className="section-title"><h2>投资经理待办</h2><span className="badge red">{pendingTaskCount} 项待处理</span></div>
         <TaskManager tasks={tasks} onTaskUpdate={setTaskState} />
       </div>
